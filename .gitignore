@@ -13,6 +13,13 @@ dist/
 build/
 *.js.map
 
+# Bicep compiled templates
+*.json
+!package.json
+!host.json
+!**/function.json
+!local.settings.json.template
+
 # OS files
 .DS_Store
 Thumbs.db
