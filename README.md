@@ -11,7 +11,7 @@ graph TB
     end
     
     subgraph "API Layer"
-        B[Azure Functions v4<br/>Node.js 18]
+        B[Azure Functions v4<br/>Python 3.11]
         B1[SubmitAlert Function<br/>HTTP POST]
     end
     
@@ -27,7 +27,7 @@ graph TB
     
     U -->|HTTPS| A
     A -->|fetch API<br/>POST /api/SubmitAlert| B1
-    B1 -->|@azure/cosmos| C1
+    B1 -->|azure-cosmos SDK| C1
     C1 --> C2
     
     style A fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
@@ -54,8 +54,9 @@ graph TB
 - **Responsive Design** for mobile and desktop
 
 ### Backend
-- **Node.js v18** with Azure Functions v4
-- **@azure/cosmos** SDK for database operations
+- **Python 3.11** with Azure Functions v4
+- **azure-cosmos** SDK for database operations
+- **FastAPI** for additional REST API capabilities
 - **HTTP Trigger** for RESTful API
 - **CORS Support** for cross-origin requests
 
@@ -71,10 +72,10 @@ graph TB
 ```
 azure-disaster-response/
 ├── SubmitAlert/              # Azure Function
-│   ├── index.js             # Function logic
+│   ├── __init__.py          # Function logic (Python)
 │   └── function.json        # Function configuration
 ├── index.html               # Frontend UI
-├── package.json             # Node.js dependencies
+├── requirements.txt         # Python dependencies
 ├── host.json                # Function App configuration
 ├── main.bicep              # Infrastructure as Code
 └── README.md               # This file
@@ -87,7 +88,7 @@ azure-disaster-response/
 - [Azure Account](https://azure.microsoft.com/free/)
 - [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
 - [Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)
-- [Node.js v18+](https://nodejs.org/)
+- [Python 3.11+](https://www.python.org/downloads/)
 
 ### Local Development
 
@@ -99,7 +100,7 @@ azure-disaster-response/
 
 2. **Install dependencies**
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
 
 3. **Configure local settings**
@@ -109,7 +110,7 @@ azure-disaster-response/
      "IsEncrypted": false,
      "Values": {
        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-       "FUNCTIONS_WORKER_RUNTIME": "node",
+       "FUNCTIONS_WORKER_RUNTIME": "python",
        "COSMOS_ENDPOINT": "https://your-cosmos-account.documents.azure.com:443/",
        "COSMOS_KEY": "your-cosmos-key",
        "COSMOS_DATABASE_ID": "DisasterResponseDB",
@@ -120,7 +121,7 @@ azure-disaster-response/
 
 4. **Run the Function App locally**
    ```bash
-   npm start
+   func start
    ```
    The function will be available at `http://localhost:7071/api/SubmitAlert`
 
@@ -165,9 +166,9 @@ azure-disaster-response/
 
 ### Deploy Function App
 
-1. **Build the project**
+1. **Install dependencies (if not already done)**
    ```bash
-   npm install --production
+   pip install -r requirements.txt
    ```
 
 2. **Deploy to Azure Functions**

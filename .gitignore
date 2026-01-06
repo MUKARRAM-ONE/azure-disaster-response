@@ -1,4 +1,15 @@
-# Node modules
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Node modules (legacy)
 node_modules/
 package-lock.json
 
@@ -7,6 +18,7 @@ local.settings.json
 bin/
 obj/
 .vscode/
+.python_packages/
 
 # Build outputs
 dist/
@@ -15,7 +27,6 @@ build/
 
 # Bicep compiled templates
 *.json
-!package.json
 !host.json
 !**/function.json
 !local.settings.json.template

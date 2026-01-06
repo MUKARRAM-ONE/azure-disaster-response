@@ -3,14 +3,14 @@
 ## Prerequisites
 - Azure account (free tier works)
 - Azure CLI installed
-- Node.js 18+ installed
+- Python 3.11+ installed
 - Azure Functions Core Tools v4
 
 ## Local Development (5 minutes)
 
 1. **Install dependencies**
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
 
 2. **Configure local settings**
@@ -21,7 +21,7 @@
 
 3. **Start the Function App**
    ```bash
-   npm start
+   func start
    ```
 
 4. **Open the frontend**
