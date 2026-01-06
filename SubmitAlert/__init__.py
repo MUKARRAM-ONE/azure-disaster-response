@@ -2,9 +2,8 @@ import json
 import logging
 import os
 import time
-import random
-import string
-from datetime import datetime
+import uuid
+from datetime import datetime, timezone
 import azure.functions as func
 from azure.cosmos import CosmosClient, exceptions
 
@@ -76,11 +75,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         database = client.get_database_client(database_id)
         container = database.get_container_client(container_id)
 
-        # Generate unique ID
-        # NOTE: ID generation uses timestamp + random string. For high-load production
-        # environments, consider using the 'uuid' module for better collision resistance.
-        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=9))
-        alert_id = f"{int(time.time() * 1000)}-{random_suffix}"
+        # Generate unique ID using UUID for better collision resistance
+        alert_id = str(uuid.uuid4())
 
         # Create alert document
         alert_document = {
@@ -88,7 +84,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "location": location,
             "type": alert_type,
             "severity": severity,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "new"
         }
 
