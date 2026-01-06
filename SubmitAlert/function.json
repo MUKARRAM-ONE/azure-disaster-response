@@ -8,7 +8,8 @@
       "methods": [
         "post",
         "options"
-      ]
+      ],
+      "_comment": "SECURITY NOTE: authLevel set to 'anonymous' for easy development. For production, change to 'function' or 'admin' and update frontend to include function key in requests."
     },
     {
       "type": "http",

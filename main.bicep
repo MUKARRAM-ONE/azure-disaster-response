@@ -175,6 +175,8 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
         }
       ]
       cors: {
+        // SECURITY NOTE: Wildcard '*' allows all origins. For production, replace with:
+        // allowedOrigins: ['https://${staticWebApp.properties.defaultHostname}']
         allowedOrigins: [
           '*'
         ]

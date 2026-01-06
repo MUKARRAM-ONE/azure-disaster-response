@@ -52,6 +52,8 @@ module.exports = async function (context, req) {
         const container = database.container(containerId);
 
         // Create alert document
+        // NOTE: ID generation uses timestamp + random string. For high-load production
+        // environments, consider using the 'uuid' package for better collision resistance.
         const alertDocument = {
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             location,

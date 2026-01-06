@@ -11,7 +11,7 @@ graph TB
     end
     
     subgraph "API Layer"
-        B[Azure Functions<br/>Node.js v4]
+        B[Azure Functions v4<br/>Node.js 18]
         B1[SubmitAlert Function<br/>HTTP POST]
     end
     
@@ -270,10 +270,12 @@ azure-disaster-response/
 ## 🔒 Security Considerations
 
 - **HTTPS Only**: All endpoints enforce HTTPS
-- **CORS Configuration**: Configured for specific origins (update in production)
-- **Authentication**: Currently set to anonymous (update for production)
-- **Key Management**: Cosmos DB keys stored as Function App settings
+- **CORS Configuration**: Currently allows all origins (*) for development. **IMPORTANT**: Update main.bicep line 178 to restrict to your Static Web App URL for production
+- **Authentication**: Currently set to anonymous for easy testing. **IMPORTANT**: Update SubmitAlert/function.json line 4 to use 'function' or 'admin' level authentication for production
+- **Key Management**: Cosmos DB keys stored as Function App settings (not exposed to client)
 - **Minimal Permissions**: Functions use least-privilege access patterns
+- **Input Validation**: All required fields validated before database operations
+- **ID Generation**: Uses timestamp + random string (consider uuid package for production high-load scenarios)
 
 ## 💰 Cost Optimization
 
