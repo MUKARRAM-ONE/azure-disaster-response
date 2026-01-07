@@ -176,7 +176,7 @@
                     <li>Provide the exact location of the incident</li>
                     <li>Choose the severity level based on the situation</li>
                     <li>Write a detailed description of what's happening</li>
-                    <li>Submit the alert - it will be saved to our Azure Cosmos DB</li>
+                    <li>Submit the alert - it will be saved to our Azure Table Storage</li>
                 </ol>
             </div>
         </div>
@@ -186,9 +186,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Configuration - Update this URL when deploying to Azure
-        const AZURE_FUNCTION_URL = 'http://localhost:7071/api/SubmitAlert';
-        // For production: 'https://your-function-app.azurewebsites.net/api/SubmitAlert'
+        // Configuration - production default points at deployed Function App
+        const AZURE_FUNCTION_URL = 'https://func-disaster-1767817356.azurewebsites.net/api/SubmitAlert';
+        // For local testing, switch to: 'http://localhost:7071/api/SubmitAlert'
 
         const form = document.getElementById('alertForm');
         const responseDiv = document.getElementById('responseMessage');
