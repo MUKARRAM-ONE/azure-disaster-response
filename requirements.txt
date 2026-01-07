@@ -1,3 +1,5 @@
 azure-functions>=1.18.0,<2.0.0
+azure-cosmos>=4.5.0,<5.0.0
 azure-data-tables>=12.4.0,<13.0.0
+pyjwt>=2.8.0,<3.0.0
 pydantic>=2.0.0,<3.0.0
