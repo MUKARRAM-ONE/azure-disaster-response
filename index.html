@@ -4,37 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disaster Response Platform</title>
+    
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px 0;
+            padding: 20px;
         }
         .main-container {
-            background: white;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: none;
             border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            margin-top: 50px;
         }
-        .header-section {
-            text-align: center;
-            margin-bottom: 40px;
+        .card-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
         }
-        .header-section h1 {
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 10px;
+        .severity-badge {
+            font-size: 0.9rem;
+            padding: 8px 15px;
+            border-radius: 20px;
         }
-        .header-section p {
-            color: #6c757d;
+        .alert-success {
+            border-left: 5px solid #28a745;
         }
-        .form-label {
-            font-weight: 600;
-            color: #495057;
+        .alert-danger {
+            border-left: 5px solid #dc3545;
         }
         .btn-submit {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -46,141 +53,175 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
-        .alert-success, .alert-danger {
-            margin-top: 20px;
-            border-radius: 10px;
+        .form-label {
+            font-weight: 600;
+            color: #495057;
         }
-        .icon-header {
+        .disaster-icon {
             font-size: 3rem;
-            color: #667eea;
-            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8 col-md-10">
-                <div class="main-container">
-                    <div class="header-section">
-                        <i class="bi bi-exclamation-triangle icon-header"></i>
-                        <h1>Disaster Response Platform</h1>
-                        <p class="lead">Report emergencies and disasters in your area</p>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="text-center text-white mb-4">
+            <i class="bi bi-exclamation-triangle-fill disaster-icon"></i>
+            <h1 class="display-4 fw-bold">Disaster Response Platform</h1>
+            <p class="lead">Submit real-time disaster alerts to help communities stay safe</p>
+        </div>
+
+        <!-- Alert Form Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Submit Disaster Alert</h2>
+            </div>
+            <div class="card-body p-4">
+                <form id="alertForm">
+                    <!-- Disaster Type -->
+                    <div class="mb-4">
+                        <label for="disasterType" class="form-label">
+                            <i class="bi bi-tag-fill me-2"></i>Disaster Type
+                        </label>
+                        <select class="form-select form-select-lg" id="disasterType" required>
+                            <option value="" selected disabled>Select disaster type...</option>
+                            <option value="Flood">🌊 Flood</option>
+                            <option value="Fire">🔥 Fire</option>
+                            <option value="Earthquake">🏚️ Earthquake</option>
+                            <option value="Hurricane">🌀 Hurricane</option>
+                            <option value="Tornado">🌪️ Tornado</option>
+                            <option value="Tsunami">🌊 Tsunami</option>
+                            <option value="Landslide">⛰️ Landslide</option>
+                            <option value="Other">⚠️ Other</option>
+                        </select>
                     </div>
 
-                    <form id="alertForm">
-                        <div class="mb-4">
-                            <label for="location" class="form-label">
-                                <i class="bi bi-geo-alt-fill text-primary"></i> Location
-                            </label>
-                            <input 
-                                type="text" 
-                                class="form-control form-control-lg" 
-                                id="location" 
-                                name="location"
-                                placeholder="Enter city, address, or coordinates"
-                                required
-                            >
-                            <div class="form-text">Specify the location of the incident</div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="type" class="form-label">
-                                <i class="bi bi-tag-fill text-warning"></i> Disaster Type
-                            </label>
-                            <select class="form-select form-select-lg" id="type" name="type" required>
-                                <option value="" selected disabled>Select disaster type</option>
-                                <option value="earthquake">Earthquake</option>
-                                <option value="flood">Flood</option>
-                                <option value="fire">Fire</option>
-                                <option value="hurricane">Hurricane</option>
-                                <option value="tornado">Tornado</option>
-                                <option value="landslide">Landslide</option>
-                                <option value="tsunami">Tsunami</option>
-                                <option value="drought">Drought</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="severity" class="form-label">
-                                <i class="bi bi-speedometer2 text-danger"></i> Severity Level
-                            </label>
-                            <select class="form-select form-select-lg" id="severity" name="severity" required>
-                                <option value="" selected disabled>Select severity level</option>
-                                <option value="low" class="text-success">Low - Minor incident</option>
-                                <option value="medium" class="text-warning">Medium - Moderate impact</option>
-                                <option value="high" class="text-danger">High - Severe situation</option>
-                                <option value="critical" class="text-danger fw-bold">Critical - Life threatening</option>
-                            </select>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg btn-submit">
-                                <i class="bi bi-send-fill"></i> Submit Alert
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- Success Message -->
-                    <div id="successMessage" class="alert alert-success d-none" role="alert">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <strong>Success!</strong> Alert submitted successfully.
+                    <!-- Location -->
+                    <div class="mb-4">
+                        <label for="location" class="form-label">
+                            <i class="bi bi-geo-alt-fill me-2"></i>Location
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control form-control-lg" 
+                            id="location" 
+                            placeholder="e.g., Downtown Seattle, WA"
+                            required
+                        >
+                        <div class="form-text">Provide specific address, city, or region</div>
                     </div>
 
-                    <!-- Error Message -->
-                    <div id="errorMessage" class="alert alert-danger d-none" role="alert">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <strong>Error!</strong> <span id="errorText"></span>
+                    <!-- Severity Level -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-speedometer2 me-2"></i>Severity Level
+                        </label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <input type="radio" class="btn-check" name="severity" id="severityLow" value="Low" required>
+                            <label class="btn btn-outline-success" for="severityLow">
+                                <i class="bi bi-info-circle-fill"></i> Low
+                            </label>
+
+                            <input type="radio" class="btn-check" name="severity" id="severityMedium" value="Medium">
+                            <label class="btn btn-outline-warning" for="severityMedium">
+                                <i class="bi bi-exclamation-circle-fill"></i> Medium
+                            </label>
+
+                            <input type="radio" class="btn-check" name="severity" id="severityHigh" value="High">
+                            <label class="btn btn-outline-danger" for="severityHigh">
+                                <i class="bi bi-exclamation-triangle-fill"></i> High
+                            </label>
+
+                            <input type="radio" class="btn-check" name="severity" id="severityCritical" value="Critical">
+                            <label class="btn btn-outline-dark" for="severityCritical">
+                                <i class="bi bi-fire"></i> Critical
+                            </label>
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Message -->
+                    <div class="mb-4">
+                        <label for="message" class="form-label">
+                            <i class="bi bi-chat-left-text-fill me-2"></i>Alert Message
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="message" 
+                            rows="4" 
+                            placeholder="Describe the situation, affected areas, and any immediate actions needed..."
+                            required
+                        ></textarea>
+                        <div class="form-text">Minimum 20 characters</div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg btn-submit">
+                            <i class="bi bi-send-fill me-2"></i>Submit Alert
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Response Message Area -->
+        <div id="responseMessage"></div>
+
+        <!-- Info Card -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-info-circle-fill me-2"></i>How It Works</h5>
+                <ol class="mb-0">
+                    <li>Select the type of disaster you're reporting</li>
+                    <li>Provide the exact location of the incident</li>
+                    <li>Choose the severity level based on the situation</li>
+                    <li>Write a detailed description of what's happening</li>
+                    <li>Submit the alert - it will be saved to our Azure Table Storage</li>
+                </ol>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // Configuration - Update this URL with your Azure Function endpoint
-        const FUNCTION_URL = '/api/SubmitAlert';
-        
-        // For local development, you might use:
-        // const FUNCTION_URL = 'http://localhost:7071/api/SubmitAlert';
-        
-        // For production, use your Azure Function App URL:
-        // const FUNCTION_URL = 'https://your-function-app.azurewebsites.net/api/SubmitAlert';
+        // Configuration - production default points at deployed Function App
+        const AZURE_FUNCTION_URL = 'https://func-disaster-1767817356.azurewebsites.net/api/SubmitAlert';
+        // For local testing, switch to: 'http://localhost:7071/api/SubmitAlert'
 
         const form = document.getElementById('alertForm');
-        const successMessage = document.getElementById('successMessage');
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
+        const responseDiv = document.getElementById('responseMessage');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Hide previous messages
-            successMessage.classList.add('d-none');
-            errorMessage.classList.add('d-none');
-
-            // Get form data
+            // Get form values
             const formData = {
+                type: document.getElementById('disasterType').value,
                 location: document.getElementById('location').value,
-                type: document.getElementById('type').value,
-                severity: document.getElementById('severity').value
+                severity: document.querySelector('input[name="severity"]:checked').value,
+                message: document.getElementById('message').value
             };
 
-            // Disable submit button
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+            // Validate message length
+            if (formData.message.length < 20) {
+                showResponse('error', 'Alert message must be at least 20 characters long.');
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
 
             try {
-                const response = await fetch(FUNCTION_URL, {
+                // Send POST request to Azure Function
+                const response = await fetch(AZURE_FUNCTION_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(formData)
                 });
@@ -188,30 +229,82 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Show success message
-                    successMessage.classList.remove('d-none');
-                    
-                    // Reset form
+                    showResponse('success', `Alert submitted successfully! Alert ID: ${data.alertId}`, data);
                     form.reset();
-
-                    // Hide success message after 5 seconds
-                    setTimeout(() => {
-                        successMessage.classList.add('d-none');
-                    }, 5000);
                 } else {
-                    // Show error message
-                    errorText.textContent = data.error || 'Failed to submit alert. Please try again.';
-                    errorMessage.classList.remove('d-none');
+                    showResponse('error', data.error || 'Failed to submit alert');
                 }
             } catch (error) {
-                // Show error message
-                errorText.textContent = 'Network error. Please check your connection and try again.';
-                errorMessage.classList.remove('d-none');
-                console.error('Error submitting alert:', error);
+                console.error('Error:', error);
+                showResponse('error', `Network error: ${error.message}. Make sure the Azure Function is running.`);
             } finally {
-                // Re-enable submit button
-                submitButton.disabled = false;
-                submitButton.innerHTML = originalButtonText;
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
+
+        function showResponse(type, message, data = null) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+            
+            let html = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="bi ${icon} me-2"></i>
+                    <strong>${message}</strong>
+            `;
+
+            if (data && type === 'success') {
+                html += `
+                    <hr>
+                    <div class="small">
+                        <strong>Timestamp:</strong> ${new Date(data.data.timestamp).toLocaleString()}<br>
+                        <strong>Location:</strong> ${data.data.location}<br>
+                        <strong>Type:</strong> ${data.data.type}<br>
+                        <strong>Severity:</strong> <span class="badge bg-${getSeverityColor(data.data.severity)}">${data.data.severity}</span>
+                    </div>
+                `;
+            }
+
+            html += `
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            responseDiv.innerHTML = html;
+
+            // Auto-dismiss after 8 seconds
+            setTimeout(() => {
+                const alert = responseDiv.querySelector('.alert');
+                if (alert) {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                    bsAlert.close();
+                }
+            }, 8000);
+        }
+
+        function getSeverityColor(severity) {
+            const colors = {
+                'Low': 'success',
+                'Medium': 'warning',
+                'High': 'danger',
+                'Critical': 'dark'
+            };
+            return colors[severity] || 'secondary';
+        }
+
+        // Add character counter for message
+        const messageField = document.getElementById('message');
+        messageField.addEventListener('input', () => {
+            const length = messageField.value.length;
+            const formText = messageField.nextElementSibling;
+            if (length < 20) {
+                formText.textContent = `${20 - length} more characters needed`;
+                formText.classList.add('text-danger');
+            } else {
+                formText.textContent = `${length} characters`;
+                formText.classList.remove('text-danger');
+                formText.classList.add('text-success');
             }
         });
     </script>

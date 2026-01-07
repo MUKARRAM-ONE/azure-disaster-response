@@ -16,7 +16,7 @@ param environment string = 'dev'
 param cosmosAccountName string = '${projectName}-cosmos-${environment}-${uniqueString(resourceGroup().id)}'
 
 @description('Cosmos DB database name')
-param cosmosDatabaseName string = 'DisasterResponseDB'
+param cosmosDatabaseName string = 'DisasterDB'
 
 @description('Cosmos DB container name')
 param cosmosContainerName string = 'Alerts'
@@ -79,7 +79,7 @@ resource cosmosContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
       id: cosmosContainerName
       partitionKey: {
         paths: [
-          '/id'
+          '/type'
         ]
         kind: 'Hash'
       }
@@ -123,7 +123,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   }
 }
 
-// Function App
+// Function App (Python with FastAPI-style)
 resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
   name: functionAppName
   location: location
@@ -131,7 +131,7 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: 'NODE|18'
+      linuxFxVersion: 'PYTHON|3.11'
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
@@ -151,11 +151,7 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'node'
-        }
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~18'
+          value: 'python'
         }
         {
           name: 'COSMOS_ENDPOINT'
@@ -175,8 +171,6 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
         }
       ]
       cors: {
-        // SECURITY NOTE: Wildcard '*' allows all origins. For production, replace with:
-        // allowedOrigins: ['https://${staticWebApp.properties.defaultHostname}']
         allowedOrigins: [
           '*'
         ]

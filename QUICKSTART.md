@@ -3,25 +3,25 @@
 ## Prerequisites
 - Azure account (free tier works)
 - Azure CLI installed
-- Node.js 18+ installed
+- Python 3.11+ installed
 - Azure Functions Core Tools v4
 
 ## Local Development (5 minutes)
 
 1. **Install dependencies**
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
 
 2. **Configure local settings**
    ```bash
    cp local.settings.json.template local.settings.json
-   # Edit local.settings.json with your Cosmos DB credentials
+    # Edit local.settings.json with your Azure Storage connection string
    ```
 
 3. **Start the Function App**
    ```bash
-   npm start
+   func start
    ```
 
 4. **Open the frontend**
@@ -30,55 +30,41 @@
 
 ## Azure Deployment (10 minutes)
 
-### Step 1: Deploy Infrastructure
+### Step 1: Deploy Infrastructure (already deployed)
 
 ```bash
 # Login to Azure
-az login
+az login --use-device-code
 
 # Create resource group
 az group create --name disaster-response-rg --location eastus
 
-# Deploy Bicep template
-az deployment group create \
-  --resource-group disaster-response-rg \
-  --template-file main.bicep \
-  --parameters environment=prod
+# Create storage + table
+STORAGE_ACCOUNT=stgdisaster767816886
+az storage account create --name $STORAGE_ACCOUNT --resource-group disaster-response-rg --location eastasia --sku Standard_LRS
+az storage table create --name Alerts --account-name $STORAGE_ACCOUNT
 
-# Get outputs
-az deployment group show \
-  --resource-group disaster-response-rg \
-  --name main \
-  --query properties.outputs
+# Create Function App (Python 3.11)
+FUNCTION_APP=func-disaster-1767817356
+az functionapp create --name $FUNCTION_APP --resource-group disaster-response-rg --consumption-plan-location eastasia --runtime python --runtime-version 3.11 --functions-version 4 --storage-account $STORAGE_ACCOUNT --os-type Linux
+
+# Configure app settings
+STORAGE_CONNECTION=$(az storage account show-connection-string --name $STORAGE_ACCOUNT --resource-group disaster-response-rg --query connectionString -o tsv)
+az functionapp config appsettings set --name $FUNCTION_APP --resource-group disaster-response-rg --settings AZURE_STORAGE_CONNECTION_STRING="$STORAGE_CONNECTION" TABLE_NAME=Alerts
 ```
 
-### Step 2: Deploy Function App
+### Step 2: Deploy Function App Code
 
 ```bash
-# Get function app name from outputs
-FUNCTION_APP_NAME=$(az deployment group show \
-  --resource-group disaster-response-rg \
-  --name main \
-  --query properties.outputs.functionAppName.value -o tsv)
-
-# Deploy
-func azure functionapp publish $FUNCTION_APP_NAME
+func azure functionapp publish func-disaster-1767817356 --python
 ```
 
 ### Step 3: Deploy Frontend
 
 ```bash
-# Get function URL from outputs
-FUNCTION_URL=$(az deployment group show \
-  --resource-group disaster-response-rg \
-  --name main \
-  --query properties.outputs.functionAppUrl.value -o tsv)
-
 # Update index.html with the function URL
-# Change: const FUNCTION_URL = '/api/SubmitAlert';
-# To: const FUNCTION_URL = 'https://your-function-app.azurewebsites.net/api/SubmitAlert';
-
-# Deploy to Static Web App (via GitHub or manual upload)
+# const FUNCTION_URL = 'https://func-disaster-1767817356.azurewebsites.net/api/SubmitAlert';
+# Host via Static Web Apps or any static hosting
 ```
 
 ### Step 4: Test the Deployment
@@ -108,12 +94,12 @@ Before going to production, update:
 
 ### Function not responding
 - Check Azure Function logs in portal
-- Verify Cosmos DB connection settings
+- Verify Azure Storage connection settings
 - Ensure CORS is configured correctly
 
 ### Cannot save to database
-- Verify Cosmos DB credentials
-- Check container and database names
+- Verify Storage connection string and table name
+- Check that TABLE_NAME is set to Alerts
 - Review Function App configuration
 
 ### Frontend errors
