@@ -123,7 +123,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({
                 "error": "Invalid JSON in request body"
-            }),Azure Table Storage
+            }),
             status_code=400,
             mimetype="application/json",
             headers={
@@ -133,7 +133,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             }
         )
     except Exception as error:
-        logging.error(f'Error saving alert to Cosmos DB: {str(error)}')
+        logging.error(f'Error saving alert to Table Storage: {str(error)}')
         
         return func.HttpResponse(
             json.dumps({
