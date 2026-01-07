@@ -1,151 +1,142 @@
 import json
 import logging
 import os
-import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 import azure.functions as func
-from azure.data.tables import TableServiceClient, TableEntity
+from azure.cosmos import CosmosClient
+from functools import wraps
 
+# Cosmos DB setup
+COSMOS_CONNECTION = os.environ.get('COSMOS_CONNECTION_STRING')
+COSMOS_DATABASE = 'disaster-response'
+COSMOS_CONTAINER = 'Alerts'
+
+def get_cosmos_container():
+    """Get Cosmos DB container client."""
+    client = CosmosClient.from_connection_string(COSMOS_CONNECTION)
+    database = client.get_database_client(COSMOS_DATABASE)
+    return database.get_container_client(COSMOS_CONTAINER)
+
+def cors_headers():
+    """Return CORS headers."""
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
+
+def cors_response(body, status_code=200):
+    """Return HTTP response with CORS headers."""
+    return func.HttpResponse(
+        json.dumps(body) if isinstance(body, dict) else body,
+        status_code=status_code,
+        headers=cors_headers(),
+        mimetype='application/json'
+    )
+
+def validate_bearer_token(req: func.HttpRequest):
+    """Extract and validate Bearer token from Authorization header."""
+    auth_header = req.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    return auth_header.split(' ')[1]
+
+def require_auth(f):
+    """Decorator to require JWT Bearer token."""
+    @wraps(f)
+    def decorated(req: func.HttpRequest):
+        token = validate_bearer_token(req)
+        if not token:
+            return cors_response({'error': 'Unauthorized'}, 401)
+        return f(req, token)
+    return decorated
+
+@require_auth
+def submit_alert(req: func.HttpRequest, token: str) -> func.HttpResponse:
+    """POST /api/SubmitAlert - Submit a new disaster alert."""
+    try:
+        req_body = req.get_json()
+        
+        # Validate required fields
+        required = ['type', 'location', 'severity', 'message']
+        if not all(k in req_body for k in required):
+            return cors_response({'error': 'Missing required fields'}, 400)
+        
+        if len(req_body.get('message', '')) < 20:
+            return cors_response({'error': 'Message must be at least 20 characters'}, 400)
+        
+        # Create alert document
+        alert_id = str(uuid.uuid4())
+        alert = {
+            'id': alert_id,
+            'type': req_body['type'],
+            'location': req_body['location'],
+            'severity': req_body['severity'],
+            'message': req_body['message'],
+            'timestamp': datetime.utcnow().isoformat() + 'Z'
+        }
+        
+        # Insert into Cosmos DB
+        container = get_cosmos_container()
+        container.create_item(alert)
+        
+        return cors_response({'alertId': alert_id, 'data': alert}, 201)
+    
+    except json.JSONDecodeError:
+        return cors_response({'error': 'Invalid JSON'}, 400)
+    except Exception as e:
+        logging.error(f'Error submitting alert: {str(e)}')
+        return cors_response({'error': str(e)}, 500)
+
+@require_auth
+def list_alerts(req: func.HttpRequest, token: str) -> func.HttpResponse:
+    """GET /api/Alerts - List all alerts with pagination."""
+    try:
+        limit = int(req.params.get('limit', 20))
+        offset = int(req.params.get('offset', 0))
+        
+        # Query Cosmos DB
+        container = get_cosmos_container()
+        query = "SELECT * FROM c ORDER BY c.timestamp DESC"
+        items = list(container.query_items(query, max_item_count=1000))
+        
+        total = len(items)
+        paginated = items[offset:offset + limit]
+        
+        return cors_response({
+            'alerts': paginated,
+            'total': total,
+            'limit': limit,
+            'offset': offset
+        }, 200)
+    
+    except Exception as e:
+        logging.error(f'Error listing alerts: {str(e)}')
+        return cors_response({'error': str(e)}, 500)
+
+@require_auth
+def get_alert(req: func.HttpRequest, token: str, alert_id: str) -> func.HttpResponse:
+    """GET /api/Alerts/{id} - Get a specific alert."""
+    try:
+        container = get_cosmos_container()
+        query = "SELECT * FROM c WHERE c.id = @id"
+        items = list(container.query_items(query, parameters=[{'name': '@id', 'value': alert_id}], max_item_count=1))
+        
+        if not items:
+            return cors_response({'error': 'Alert not found'}, 404)
+        
+        return cors_response(items[0], 200)
+    
+    except Exception as e:
+        logging.error(f'Error getting alert: {str(e)}')
+        return cors_response({'error': str(e)}, 500)
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    Azure Function to submit disaster alerts to Cosmos DB.
-    Accepts POST requests with location, type, and severity.
-    """
-    logging.info('SubmitAlert function processing a request.')
-
+    """Main entry point - route based on method and path."""
     # Handle CORS preflight
     if req.method == "OPTIONS":
-        return func.HttpResponse(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type"
-            }
-        )
-
-    # Validate HTTP method
-    if req.method != "POST":
-        return func.HttpResponse(
-            json.dumps({"error": "Method not allowed. Use POST."}),
-            status_code=405,
-            mimetype="application/json",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type"
-            }
-        )
-
-    try:
-        # Parse request body
-        req_body = req.get_json()
-        location = req_body.get('location')
-        alert_type = req_body.get('type')
-        severity = req_body.get('severity')
-
-        # Validate required fields
-        if not location or not alert_type or not severity:
-            return func.HttpResponse(
-                json.dumps({
-                    "error": "Missing required fields. Please provide location, type, and severity."
-                }),
-                status_code=400,
-                mimetype="application/json",
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type"
-                }
-            )
-
-        # Get Azure Storage configuration
-        connection_string = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
-        table_name = os.environ.get('TABLE_NAME', 'Alerts')
-
-        if not connection_string:
-            raise Exception("Azure Storage connection string not configured")
-
-        # Initialize Table Service client
-        table_service = TableServiceClient.from_connection_string(connection_string)
-        table_client = table_service.get_table_client(table_name)
-
-        # Generate unique ID using UUID for better collision resistance
-        alert_id = str(uuid.uuid4())
-        timestamp_str = datetime.now(timezone.utc).isoformat()
-
-        # Create alert entity for Table Storage
-        # PartitionKey: alert type, RowKey: unique ID
-        alert_entity = {
-            "PartitionKey": alert_type,
-            "RowKey": alert_id,
-            "location": location,
-            "type": alert_type,
-            "severity": severity,
-            "timestamp": timestamp_str,
-            "status": "new"
-        }
-
-        # Save to Azure Table Storage
-        table_client.create_entity(entity=alert_entity)
-
-        logging.info(f"Alert saved successfully: {alert_id}")
-        
-        # Prepare response data
-        created_item = {
-            "id": alert_id,
-            "location": location,
-            "type": alert_type,
-            "severity": severity,
-            "timestamp": timestamp_str,
-            "status": "new"
-        }
-
-        # Return success response
-        return func.HttpResponse(
-            json.dumps({
-                "success": True,
-                "message": "Alert submitted successfully",
-                "data": created_item
-            }),
-            status_code=201,
-            mimetype="application/json",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type"
-            }
-        )
-
-    except ValueError:
-        return func.HttpResponse(
-            json.dumps({
-                "error": "Invalid JSON in request body"
-            }),
-            status_code=400,
-            mimetype="application/json",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type"
-            }
-        )
-    except Exception as error:
-        logging.error(f'Error saving alert to Table Storage: {str(error)}')
-        
-        return func.HttpResponse(
-            json.dumps({
-                "success": False,
-                "error": "Failed to save alert",
-                "details": str(error)
-            }),
-            status_code=500,
-            mimetype="application/json",
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type"
-            }
-        )
+        return func.HttpResponse(status_code=204, headers=cors_headers())
+    
+    # Default: submit alert (POST /api/SubmitAlert)
+    return submit_alert(req)
