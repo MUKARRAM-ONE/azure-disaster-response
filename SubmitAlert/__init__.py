@@ -5,7 +5,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 import azure.functions as func
-from azure.cosmos import CosmosClient, exceptions
+from azure.data.tables import TableServiceClient, TableEntity
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -61,37 +61,47 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 }
             )
 
-        # Get Cosmos DB configuration
-        endpoint = os.environ.get('COSMOS_ENDPOINT')
-        key = os.environ.get('COSMOS_KEY')
-        database_id = os.environ.get('COSMOS_DATABASE_ID', 'DisasterResponseDB')
-        container_id = os.environ.get('COSMOS_CONTAINER_ID', 'Alerts')
+        # Get Azure Storage configuration
+        connection_string = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
+        table_name = os.environ.get('TABLE_NAME', 'Alerts')
 
-        if not endpoint or not key:
-            raise Exception("Cosmos DB connection settings not configured")
+        if not connection_string:
+            raise Exception("Azure Storage connection string not configured")
 
-        # Initialize Cosmos DB client
-        client = CosmosClient(endpoint, key)
-        database = client.get_database_client(database_id)
-        container = database.get_container_client(container_id)
+        # Initialize Table Service client
+        table_service = TableServiceClient.from_connection_string(connection_string)
+        table_client = table_service.get_table_client(table_name)
 
         # Generate unique ID using UUID for better collision resistance
         alert_id = str(uuid.uuid4())
+        timestamp_str = datetime.now(timezone.utc).isoformat()
 
-        # Create alert document
-        alert_document = {
+        # Create alert entity for Table Storage
+        # PartitionKey: alert type, RowKey: unique ID
+        alert_entity = {
+            "PartitionKey": alert_type,
+            "RowKey": alert_id,
+            "location": location,
+            "type": alert_type,
+            "severity": severity,
+            "timestamp": timestamp_str,
+            "status": "new"
+        }
+
+        # Save to Azure Table Storage
+        table_client.create_entity(entity=alert_entity)
+
+        logging.info(f"Alert saved successfully: {alert_id}")
+        
+        # Prepare response data
+        created_item = {
             "id": alert_id,
             "location": location,
             "type": alert_type,
             "severity": severity,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": timestamp_str,
             "status": "new"
         }
-
-        # Save to Cosmos DB
-        created_item = container.create_item(body=alert_document)
-
-        logging.info(f"Alert saved successfully: {created_item['id']}")
 
         # Return success response
         return func.HttpResponse(
@@ -113,7 +123,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({
                 "error": "Invalid JSON in request body"
-            }),
+            }),Azure Table Storage
             status_code=400,
             mimetype="application/json",
             headers={

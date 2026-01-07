@@ -1,358 +1,269 @@
-# Azure Disaster Response Platform
+# Disaster Response Platform 🚨
 
-A comprehensive disaster response platform built on Azure, enabling users to report emergencies and disasters in real-time. The system uses Azure Functions for serverless backend processing, Cosmos DB for data storage, and Static Web Apps for hosting the frontend.
+A full-stack disaster alert submission system built with **Azure Functions (Python 3.11)**, **Azure Table Storage**, and **Bootstrap 5**.
+
+## 📋 Project Overview
+
+This project allows users to submit real-time disaster alerts through a modern web interface. Alerts are stored in Azure Table Storage and can be accessed for emergency response coordination.
+
+**✅ Successfully Deployed on Azure!**
+- **Function App**: `func-disaster-1767817356` (East Asia)
+- **Storage Account**: `stgdisaster767816886` (East Asia)
+- **Table**: `Alerts` 
+- **Resource Group**: `disaster-response-rg`
+
+### Features
+- ✅ **Modern Responsive UI** - Bootstrap 5 with gradient design
+- ✅ **Serverless Backend** - Azure Functions v4 (Python 3.11)
+- ✅ **NoSQL Storage** - Azure Table Storage (serverless)
+- ✅ **Real-time Validation** - Client and server-side validation
+- ✅ **CORS Enabled** - Cross-origin resource sharing configured
+- ✅ **Free Tier Compatible** - Optimized for Azure Student Pack
+- ✅ **Asia Region Compliant** - Deployed to eastasia per subscription policy
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        A[Static Web App<br/>Bootstrap 5 UI]
-    end
-    
-    subgraph "API Layer"
-        B[Azure Functions v4<br/>Python 3.11]
-        B1[SubmitAlert Function<br/>HTTP POST]
-    end
-    
-    subgraph "Data Layer"
-        C[Cosmos DB<br/>Serverless]
-        C1[DisasterResponseDB]
-        C2[Alerts Container]
-    end
-    
-    subgraph "User"
-        U[Web Browser]
-    end
-    
-    U -->|HTTPS| A
-    A -->|fetch API<br/>POST /api/SubmitAlert| B1
-    B1 -->|azure-cosmos SDK| C1
-    C1 --> C2
-    
-    style A fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
-    style B1 fill:#764ba2,stroke:#333,stroke-width:2px,color:#fff
-    style C1 fill:#00d4aa,stroke:#333,stroke-width:2px,color:#fff
-    style C2 fill:#00d4aa,stroke:#333,stroke-width:2px,color:#fff
 ```
-
-## 📋 Features
-
-- **Real-time Alert Submission**: Users can submit disaster alerts with location, type, and severity
-- **Serverless Architecture**: Fully serverless design using Azure Functions and Cosmos DB
-- **Responsive UI**: Modern Bootstrap 5 interface that works on all devices
-- **Scalable Database**: Cosmos DB with serverless capacity for cost-effective scaling
-- **CORS Enabled**: Secure cross-origin resource sharing for API calls
-- **Infrastructure as Code**: Complete Bicep templates for automated deployment
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **HTML5** with Bootstrap 5.3
-- **JavaScript** (ES6+) with Fetch API
-- **Bootstrap Icons** for visual elements
-- **Responsive Design** for mobile and desktop
-
-### Backend
-- **Python 3.11** with Azure Functions v4
-- **azure-cosmos** SDK for database operations
-- **FastAPI** for additional REST API capabilities
-- **HTTP Trigger** for RESTful API
-- **CORS Support** for cross-origin requests
-
-### Infrastructure
-- **Azure Static Web Apps** (Free tier)
-- **Azure Functions** (Consumption plan)
-- **Azure Cosmos DB** (Serverless mode with Free tier)
-- **Azure Storage Account** for Functions runtime
-- **Bicep** for Infrastructure as Code
+┌─────────────────┐
+│   index.html    │  Bootstrap 5 Frontend
+│   (Client)      │  
+└────────┬────────┘
+         │ HTTP POST
+         │ JSON: {type, location, severity}
+         ↓
+┌─────────────────┐
+│  Azure Function │  Python 3.11 Runtime
+│  SubmitAlert    │  HTTP Trigger (func-disaster-1767817356)
+└────────┬────────┘
+         │
+         │ azure-data-tables SDK
+         ↓
+┌─────────────────┐
+│  Table Storage  │  Azure Storage Account
+│  Alerts Table   │  stgdisaster767816886
+│  PartitionKey: type │  RowKey: UUID
+└─────────────────┘
+```
 
 ## 📁 Project Structure
 
 ```
 azure-disaster-response/
-├── SubmitAlert/              # Azure Function
-│   ├── __init__.py          # Function logic (Python)
-│   └── function.json        # Function configuration
-├── index.html               # Frontend UI
-├── requirements.txt         # Python dependencies
-├── host.json                # Function App configuration
-├── main.bicep              # Infrastructure as Code
-└── README.md               # This file
+├── SubmitAlert/
+│   ├── __init__.py                # Main Azure Function (Python)
+│   └── function.json              # Function binding configuration
+├── index.html                      # Frontend web interface
+├── requirements.txt                # Python dependencies
+├── host.json                       # Azure Functions configuration
+├── local.settings.json             # Local environment variables
+├── DEPLOYMENT_GUIDE.md            # Detailed deployment instructions
+└── README.md                       # This file
 ```
 
-## 🚀 Getting Started
+## 🚀 Quick Start (Local Development)
 
 ### Prerequisites
+- **Python 3.11+** installed
+- **Git** installed
+- **Azure Functions Core Tools v4**
 
-- [Azure Account](https://azure.microsoft.com/free/)
-- [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
-- [Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)
-- [Python 3.11+](https://www.python.org/downloads/)
+### Setup
+```bash
+# 1. Install Python dependencies
+pip install -r requirements.txt
 
-### Local Development
+# 2. Install Azure Functions Core Tools (if not installed)
+# For Ubuntu/Debian:
+sudo apt-get install azure-functions-core-tools-4
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/MUKARRAM-ONE/azure-disaster-response.git
-   cd azure-disaster-response
-   ```
+# 3. Update local.settings.json with your Azure Storage connection string
+# (Already configured with deployed storage account)
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure local settings**
-   Create a `local.settings.json` file:
-   ```json
-   {
-     "IsEncrypted": false,
-     "Values": {
-       "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-       "FUNCTIONS_WORKER_RUNTIME": "python",
-       "COSMOS_ENDPOINT": "https://your-cosmos-account.documents.azure.com:443/",
-       "COSMOS_KEY": "your-cosmos-key",
-       "COSMOS_DATABASE_ID": "DisasterResponseDB",
-       "COSMOS_CONTAINER_ID": "Alerts"
-     }
-   }
-   ```
-
-4. **Run the Function App locally**
-   ```bash
-   func start
-   ```
-   The function will be available at `http://localhost:7071/api/SubmitAlert`
-
-5. **Update the frontend**
-   Edit `index.html` and change the `FUNCTION_URL` constant to point to your local endpoint:
-   ```javascript
-   const FUNCTION_URL = 'http://localhost:7071/api/SubmitAlert';
-   ```
-
-6. **Open the frontend**
-   Open `index.html` in a web browser or serve it with a local web server.
-
-## ☁️ Deployment
-
-### Deploy Infrastructure
-
-1. **Login to Azure**
-   ```bash
-   az login
-   ```
-
-2. **Create a resource group**
-   ```bash
-   az group create --name disaster-response-rg --location eastus
-   ```
-
-3. **Deploy the Bicep template**
-   ```bash
-   az deployment group create \
-     --resource-group disaster-response-rg \
-     --template-file main.bicep \
-     --parameters environment=prod
-   ```
-
-4. **Get deployment outputs**
-   ```bash
-   az deployment group show \
-     --resource-group disaster-response-rg \
-     --name main \
-     --query properties.outputs
-   ```
-
-### Deploy Function App
-
-1. **Install dependencies (if not already done)**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Deploy to Azure Functions**
-   ```bash
-   func azure functionapp publish <function-app-name>
-   ```
-
-### Deploy Static Web App
-
-1. **Update the FUNCTION_URL in index.html**
-   Replace the `FUNCTION_URL` constant with your Azure Function URL:
-   ```javascript
-   const FUNCTION_URL = 'https://your-function-app.azurewebsites.net/api/SubmitAlert';
-   ```
-
-2. **Deploy using Azure CLI or GitHub Actions**
-   ```bash
-   az staticwebapp create \
-     --name <static-web-app-name> \
-     --resource-group disaster-response-rg \
-     --source https://github.com/MUKARRAM-ONE/azure-disaster-response \
-     --location eastus \
-     --branch main \
-     --app-location "/" \
-     --output-location "/"
-   ```
-
-## 📊 API Documentation
-
-### Submit Alert Endpoint
-
-**Endpoint:** `POST /api/SubmitAlert`
-
-**Request Body:**
-```json
-{
-  "location": "San Francisco, CA",
-  "type": "earthquake",
-  "severity": "high"
-}
+# 4. Start the Azure Functions runtime
+func start
 ```
 
-**Request Fields:**
-- `location` (string, required): Location of the disaster
-- `type` (string, required): Type of disaster (earthquake, flood, fire, hurricane, tornado, landslide, tsunami, drought, other)
-- `severity` (string, required): Severity level (low, medium, high, critical)
+### Access the Application
+- **Web Interface**: http://localhost:7071/index.html
+- **API Endpoint**: http://localhost:7071/api/SubmitAlert
+- **Azure Production**: https://func-disaster-1767817356.azurewebsites.net/api/SubmitAlert
 
-**Success Response (201):**
-```json
-{
-  "success": true,
-  "message": "Alert submitted successfully",
-  "data": {
-    "id": "1234567890-abc123",
-    "location": "San Francisco, CA",
-    "type": "earthquake",
-    "severity": "high",
-    "timestamp": "2026-01-06T16:30:00.000Z",
-    "status": "new"
-  }
-}
-```
+## 🧪 Testing the API
 
-**Error Response (400):**
-```json
-{
-  "error": "Missing required fields. Please provide location, type, and severity."
-}
-```
-
-**Error Response (500):**
-```json
-{
-  "success": false,
-  "error": "Failed to save alert",
-  "details": "Error message details"
-}
-```
-
-## 🗄️ Database Schema
-
-### Alerts Container
-
-**Document Structure:**
-```json
-{
-  "id": "1234567890-abc123",
-  "location": "San Francisco, CA",
-  "type": "earthquake",
-  "severity": "high",
-  "timestamp": "2026-01-06T16:30:00.000Z",
-  "status": "new"
-}
-```
-
-**Partition Key:** `/id`
-
-**Indexing:** Automatic indexing on all paths for optimal query performance
-
-## 🔒 Security Considerations
-
-- **HTTPS Only**: All endpoints enforce HTTPS
-- **CORS Configuration**: Currently allows all origins (*) for development. **IMPORTANT**: Update main.bicep line 178 to restrict to your Static Web App URL for production
-- **Authentication**: Currently set to anonymous for easy testing. **IMPORTANT**: Update SubmitAlert/function.json line 4 to use 'function' or 'admin' level authentication for production
-- **Key Management**: Cosmos DB keys stored as Function App settings (not exposed to client)
-- **Minimal Permissions**: Functions use least-privilege access patterns
-- **Input Validation**: All required fields validated before database operations
-- **ID Generation**: Uses timestamp + random string (consider uuid package for production high-load scenarios)
-
-## 💰 Cost Optimization
-
-- **Cosmos DB**: Serverless mode with free tier (1000 RU/s, 25 GB storage)
-- **Azure Functions**: Consumption plan (1M executions free/month)
-- **Static Web Apps**: Free tier (100 GB bandwidth/month)
-- **Storage Account**: Minimal costs for Functions runtime
-
-**Estimated Monthly Cost**: $0-5 for low to moderate usage
-
-## 🧪 Testing
-
-### Test the Function Locally
-
+### Using curl:
 ```bash
 curl -X POST http://localhost:7071/api/SubmitAlert \
   -H "Content-Type: application/json" \
   -d '{
-    "location": "New York, NY",
-    "type": "flood",
-    "severity": "medium"
+    "type": "Flood",
+    "location": "Downtown Seattle, WA",
+    "severity": "High",
+    "message": "Heavy rainfall causing flash floods in downtown area. Multiple roads are impassable and water levels are rising rapidly."
   }'
 ```
 
-### Test the Deployed Function
+### Expected Response:
+```json
+{
+  "success": true,
+  "message": "Alert submitted successfully",
+  "alertId": "alert-1704564000000-abc123xyz",
+  "data": {
+    "id": "alert-1704564000000-abc123xyz",
+    "location": "Downtown Seattle, WA",
+    "type": "Flood",
+    "severity": "High",
+    "message": "Heavy rainfall causing flash floods...",
+    "timestamp": "2026-01-06T16:55:00.000Z",
+    "status": "active"
+  }
+}
+```
 
+## ☁️ Azure Deployment
+
+See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed instructions.
+
+### Quick Deploy (already live)
 ```bash
-curl -X POST https://your-function-app.azurewebsites.net/api/SubmitAlert \
-  -H "Content-Type: application/json" \
-  -d '{
-    "location": "Los Angeles, CA",
-    "type": "fire",
-    "severity": "high"
-  }'
+# 1) Login
+az login --use-device-code
+
+# 2) Resource group
+az group create --name disaster-response-rg --location eastus
+
+# 3) Storage + table
+STORAGE_ACCOUNT=stgdisaster767816886
+az storage account create --name $STORAGE_ACCOUNT --resource-group disaster-response-rg --location eastasia --sku Standard_LRS
+az storage table create --name Alerts --account-name $STORAGE_ACCOUNT
+
+# 4) Function App (Python 3.11)
+FUNCTION_APP=func-disaster-1767817356
+az functionapp create --name $FUNCTION_APP --resource-group disaster-response-rg --consumption-plan-location eastasia --runtime python --runtime-version 3.11 --functions-version 4 --storage-account $STORAGE_ACCOUNT --os-type Linux
+
+# 5) App settings
+STORAGE_CONNECTION=$(az storage account show-connection-string --name $STORAGE_ACCOUNT --resource-group disaster-response-rg --query connectionString -o tsv)
+az functionapp config appsettings set --name $FUNCTION_APP --resource-group disaster-response-rg --settings AZURE_STORAGE_CONNECTION_STRING="$STORAGE_CONNECTION" TABLE_NAME=Alerts
+
+# 6) Deploy code
+func azure functionapp publish $FUNCTION_APP --python
 ```
 
-## 📈 Future Enhancements
+## 📊 Data Schema (Table Storage)
 
-- [ ] Add user authentication with Azure AD B2C
-- [ ] Implement real-time notifications using Azure SignalR
-- [ ] Add geospatial queries for nearby disasters
-- [ ] Create admin dashboard for alert management
-- [ ] Integrate with mapping services (Azure Maps)
-- [ ] Add SMS/Email notifications with Azure Communication Services
-- [ ] Implement data analytics with Azure Synapse
-- [ ] Add mobile app support (React Native)
+### Alerts Table (Azure Storage)
 
-## 🤝 Contributing
+```json
+{
+  "PartitionKey": "Flood",                   // Alert type
+  "RowKey": "alert-1704564000000-abc123xyz", // Unique alert ID (UUID)
+  "location": "Downtown Seattle, WA",
+  "severity": "High",                        // Low | Medium | High | Critical
+  "Timestamp": "2026-01-06T16:55:00.000Z"
+}
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+**Partition Key**: Alert type (for grouping and scale)
+**Row Key**: Unique alert identifier (UUID)
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## 🔧 Configuration
+
+### Environment Variables (local.settings.json)
+```json
+{
+  "Values": {
+    "AZURE_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;...",
+    "TABLE_NAME": "Alerts",
+    "FUNCTIONS_WORKER_RUNTIME": "python"
+  }
+}
+```
+
+### Frontend Configuration (index.html)
+Update the `AZURE_FUNCTION_URL` constant:
+```javascript
+const AZURE_FUNCTION_URL = 'https://your-app.azurewebsites.net/api/SubmitAlert';
+```
+
+## 🛠️ Technologies Used
+
+### Backend
+- **Azure Functions v4** - Serverless compute
+- **Python 3.11** - Runtime
+- **azure-functions** - Azure Functions SDK
+- **azure-data-tables** - Azure Table Storage SDK
+
+### Frontend
+- **HTML5** - Semantic markup
+- **Bootstrap 5.3.2** - Responsive CSS framework
+- **Bootstrap Icons** - Icon library
+- **Vanilla JavaScript** - No framework dependencies
+
+### Infrastructure
+- **Azure Table Storage** - NoSQL storage (pay-per-use)
+- **Azure Storage** - Function app storage
+
+## 📝 Assignment Requirements Checklist
+
+- ✅ **Backend**: Azure Functions with Python 3.11
+- ✅ **HTTP Trigger**: Accepts POST with JSON body
+- ✅ **Storage**: Connects to Table Storage (NoSQL) with azure-data-tables SDK
+- ✅ **Table Name**: Alerts
+- ✅ **Frontend**: Modern, responsive HTML with Bootstrap 5
+- ✅ **Form Fields**: Location, Type (dropdown), Severity, Message
+- ✅ **JavaScript**: Fetch API for AJAX submission
+- ✅ **Infrastructure**: Deployed to Azure (func-disaster-1767817356)
+- ✅ **Dependencies**: requirements.txt with Python packages
+- ✅ **Documentation**: Deployment guide and terminal commands
+
+## 💰 Cost Considerations
+
+All resources use **Azure Free Tier**:
+- ✅ **Table Storage**: Pay-per-transaction (extremely low cost)
+- ✅ **Azure Functions**: Consumption plan (1M free executions/month)
+- ✅ **Storage Account**: LRS (5 GB free)
+
+**Estimated Monthly Cost**: **$0** (within free tier limits)
+
+## 🐛 Troubleshooting
+
+### Issue: "CORS error in browser"
+**Solution**: Ensure `host.json` has CORS configured:
+```json
+{
+  "cors": {
+    "allowedOrigins": ["*"]
+  }
+}
+```
+
+### Issue: "Cannot connect to Table Storage"
+**Solution**: 
+1. Verify your `AZURE_STORAGE_CONNECTION_STRING` in `local.settings.json`
+2. Ensure `TABLE_NAME` is set to "Alerts"
+3. For local testing, use Azurite (Azure Storage Emulator)
+
+### Issue: "Function not found"
+**Solution**: Ensure the function exists in `SubmitAlert/__init__.py`
+
+### Issue: "Module not found"
+**Solution**: Run `pip install -r requirements.txt` to install all dependencies
+
+## 📚 Additional Resources
+
+- [Azure Functions Python Guide](https://learn.microsoft.com/azure/azure-functions/functions-reference-python)
+- [Azure Table Storage Documentation](https://learn.microsoft.com/azure/storage/tables/)
+- [Bootstrap 5 Documentation](https://getbootstrap.com/docs/5.3/)
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is part of an educational assignment and is provided as-is for learning purposes.
 
-## 👥 Authors
+## 👤 Author
 
-- **MUKARRAM-ONE** - Initial work
-
-## 🙏 Acknowledgments
-
-- Azure Functions documentation
-- Bootstrap 5 framework
-- Cosmos DB SDK team
-- Azure community
-
-## 📞 Support
-
-For support, please open an issue in the GitHub repository or contact the maintainers.
+Student Project - Azure Student Pack
+**Project #40: Disaster Response Platform**
 
 ---
 
-**Built with ❤️ using Azure Cloud Services**
+**Need Help?** Check [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for step-by-step instructions.
