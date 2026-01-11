@@ -3,41 +3,23 @@ import logging
 import os
 from azure.cosmos import CosmosClient
 import azure.functions as func
+from auth_utils import require_user, cors_headers, json_response
+from security_utils import add_security_headers
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Cosmos DB setup
-COSMOS_CONNECTION = os.environ.get('COSMOS_CONNECTION_STRING')
-COSMOS_DATABASE = 'disaster-response'
-COSMOS_CONTAINER = 'Alerts'
+COSMOS_ENDPOINT = os.environ.get('COSMOS_ENDPOINT')
+COSMOS_KEY = os.environ.get('COSMOS_KEY')
+COSMOS_DATABASE = os.environ.get('COSMOS_DATABASE_NAME', 'DisasterResponseDB')
+COSMOS_CONTAINER = os.environ.get('COSMOS_CONTAINER_ID', 'alerts')
 
 def get_cosmos_container():
     """Get Cosmos DB container client."""
-    client = CosmosClient.from_connection_string(COSMOS_CONNECTION)
+    client = CosmosClient(url=COSMOS_ENDPOINT, credential=COSMOS_KEY)
     database = client.get_database_client(COSMOS_DATABASE)
     return database.get_container_client(COSMOS_CONTAINER)
-
-def cors_headers():
-    """Return CORS headers."""
-    return {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    }
-
-def cors_response(body, status_code=200):
-    """Return HTTP response with CORS headers."""
-    return func.HttpResponse(
-        json.dumps(body) if isinstance(body, dict) else body,
-        status_code=status_code,
-        headers=cors_headers(),
-        mimetype='application/json'
-    )
-
-def validate_bearer_token(req: func.HttpRequest):
-    """Extract Bearer token from Authorization header."""
-    auth_header = req.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-        return None
-    return auth_header.split(' ')[1]
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """GET /api/Alerts - List alerts with pagination."""
@@ -47,9 +29,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(status_code=204, headers=cors_headers())
     
     # Require bearer token
-    token = validate_bearer_token(req)
-    if not token:
-        return cors_response({'error': 'Unauthorized'}, 401)
+    user, error_response = require_user(req)
+    if error_response:
+        return error_response
     
     try:
         limit = int(req.params.get('limit', 20))
@@ -59,18 +41,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Query Cosmos DB
         container = get_cosmos_container()
         query = "SELECT * FROM c ORDER BY c.timestamp DESC"
-        items = list(container.query_items(query, max_item_count=1000))
+        items = list(container.query_items(query, max_item_count=1000, enable_cross_partition_query=True))
         
         total = len(items)
         paginated = items[offset:offset + limit]
         
-        return cors_response({
+        logging.info(f"GetAlerts: User {user.get('email')} fetched {len(paginated)} alerts (total: {total})")
+        
+        response = json_response({
             'alerts': paginated,
             'total': total,
             'limit': limit,
             'offset': offset
         }, 200)
+        return add_security_headers(response)
     
     except Exception as e:
         logging.error(f'Error listing alerts: {str(e)}')
-        return cors_response({'error': str(e)}, 500)
+        return json_response({'error': str(e)}, 500)

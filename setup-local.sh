@@ -30,9 +30,10 @@ cd ../
 pip install -r requirements.txt
 echo -e "${GREEN}✓ Backend dependencies installed${NC}\n"
 
-# Create .env files
-echo -e "${BLUE}Creating environment files...${NC}"
+# Create .env files (only if missing)
+echo -e "${BLUE}Creating environment files (if missing)...${NC}"
 
+if [ ! -f frontend/.env.local ]; then
 cat > frontend/.env.local << 'EOF'
 VITE_AUTH0_DOMAIN=dev-xxxxxx.auth0.com
 VITE_AUTH0_CLIENT_ID=your-client-id-here
@@ -40,22 +41,34 @@ VITE_AUTH0_AUDIENCE=https://disaster-response-api
 VITE_AUTH0_REDIRECT_URI=http://localhost:3000
 VITE_API_URL=http://localhost:7071/api
 EOF
+  echo -e "${GREEN}✓ Created frontend/.env.local${NC}"
+else
+  echo -e "${GREEN}✓ frontend/.env.local exists; skipping${NC}"
+fi
 
+if [ ! -f local.settings.json ]; then
 cat > local.settings.json << 'EOF'
 {
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "python",
-    "COSMOS_CONNECTION_STRING": "your-cosmos-connection-string-here"
+    "COSMOS_CONNECTION_STRING": "your-cosmos-connection-string-here",
+    "COSMOS_DATABASE_ID": "disaster-response",
+    "COSMOS_CONTAINER_ID": "Alerts",
+    "COSMOS_PARTITION_KEY": "/type"
   },
   "Host": {
     "CORS": "*"
   }
 }
 EOF
+  echo -e "${GREEN}✓ Created local.settings.json${NC}"
+else
+  echo -e "${GREEN}✓ local.settings.json exists; skipping${NC}"
+fi
 
-echo -e "${GREEN}✓ Environment files created${NC}\n"
+echo -e "${GREEN}✓ Environment file checks complete${NC}\n"
 
 echo -e "${BLUE}📝 Configuration complete!${NC}"
 echo ""

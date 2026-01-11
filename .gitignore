@@ -51,6 +51,7 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+frontend/.env.local
 
 # Azure
 .azure/

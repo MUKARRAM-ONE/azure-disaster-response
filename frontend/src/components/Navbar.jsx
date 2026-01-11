@@ -1,7 +1,7 @@
-import { useAuth0 } from '@auth0/auth0-react'
+import { useAuth } from '../auth/AuthContext'
 
 export function Navbar() {
-  const { user, logout, isAuthenticated } = useAuth0()
+  const { user, logout, isAuthenticated } = useAuth()
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">

@@ -1,12 +1,12 @@
-import { useAuth0 } from '@auth0/auth0-react'
 import { useState } from 'react'
 import axios from 'axios'
 import './SubmitAlertForm.css'
+import { useAuth } from '../auth/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7071/api'
 
 export function SubmitAlertForm({ onSuccess }) {
-  const { getAccessToken } = useAuth0()
+  const { token } = useAuth()
   const [formData, setFormData] = useState({
     type: '',
     location: '',
@@ -36,8 +36,7 @@ export function SubmitAlertForm({ onSuccess }) {
     }
 
     try {
-      const token = await getAccessToken()
-      const response = await axios.post(`${API_URL}/SubmitAlert`, formData, {
+      const response = await axios.post(`${API_URL}/submitalert`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'

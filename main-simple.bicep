@@ -21,17 +21,18 @@ param cosmosDatabaseName string = 'DisasterDB'
 @description('Cosmos DB container name')
 param cosmosContainerName string = 'Alerts'
 
-@description('Static Web App name')
-param staticWebAppName string = '${projectName}-web-${environment}-${uniqueString(resourceGroup().id)}'
-
 @description('Function App name')
 param functionAppName string = '${projectName}-func-${environment}-${uniqueString(resourceGroup().id)}'
 
 @description('Storage account name for Function App')
-param storageAccountName string = '${projectName}st${environment}${uniqueString(resourceGroup().id)}'
+param storageAccountName string = 'disresp${environment}${uniqueString(resourceGroup().id)}'
 
 @description('App Service Plan name')
 param appServicePlanName string = '${projectName}-plan-${environment}'
+
+@description('JWT Secret for authentication')
+@secure()
+param jwtSecret string
 
 // Cosmos DB Account
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -40,9 +41,6 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
   kind: 'GlobalDocumentDB'
   properties: {
     databaseAccountOfferType: 'Standard'
-    consistencyPolicy: {
-      defaultConsistencyLevel: 'Session'
-    }
     locations: [
       {
         locationName: location
@@ -55,7 +53,9 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
         name: 'EnableServerless'
       }
     ]
-    enableFreeTier: true
+    consistencyPolicy: {
+      defaultConsistencyLevel: 'Session'
+    }
   }
 }
 
@@ -70,7 +70,7 @@ resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023
   }
 }
 
-// Cosmos DB Container
+// Cosmos DB Container for Alerts
 resource cosmosContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-04-15' = {
   parent: cosmosDatabase
   name: cosmosContainerName
@@ -82,15 +82,6 @@ resource cosmosContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/con
           '/type'
         ]
         kind: 'Hash'
-      }
-      indexingPolicy: {
-        indexingMode: 'consistent'
-        automatic: true
-        includedPaths: [
-          {
-            path: '/*'
-          }
-        ]
       }
     }
   }
@@ -110,7 +101,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
-// App Service Plan for Function App
+// App Service Plan (Consumption Plan for Functions)
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: appServicePlanName
   location: location
@@ -118,32 +109,21 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
     name: 'Y1'
     tier: 'Dynamic'
   }
-  properties: {
-    reserved: true
-  }
+  properties: {}
 }
 
-// Function App (Python with FastAPI-style)
+// Function App
 resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
   name: functionAppName
   location: location
-  kind: 'functionapp,linux'
+  kind: 'functionapp'
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: 'PYTHON|3.11'
       appSettings: [
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${az.environment().suffixes.storage}'
-        }
-        {
-          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${az.environment().suffixes.storage}'
-        }
-        {
-          name: 'WEBSITE_CONTENTSHARE'
-          value: toLower(functionAppName)
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
         }
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -152,6 +132,10 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'python'
+        }
+        {
+          name: 'JWT_SECRET'
+          value: jwtSecret
         }
         {
           name: 'COSMOS_ENDPOINT'
@@ -180,31 +164,8 @@ resource functionApp 'Microsoft.Web/sites@2022-09-01' = {
   }
 }
 
-// Static Web App (deployed to supported region)
-resource staticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
-  name: staticWebAppName
-  location: 'centralus'  // Static Web Apps region (fixed)
-  sku: {
-    name: 'Free'
-    tier: 'Free'
-  }
-  properties: {
-    repositoryUrl: 'https://github.com/your-username/azure-disaster-response'
-    branch: 'main'
-    buildProperties: {
-      appLocation: '/'
-      apiLocation: ''
-      outputLocation: '/'
-    }
-  }
-}
-
 // Outputs
-output cosmosEndpoint string = cosmosAccount.properties.documentEndpoint
-output cosmosPrimaryKey string = cosmosAccount.listKeys().primaryMasterKey
-output cosmosDatabaseName string = cosmosDatabaseName
-output cosmosContainerName string = cosmosContainerName
 output functionAppName string = functionApp.name
 output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
-output staticWebAppUrl string = 'https://${staticWebApp.properties.defaultHostname}'
-output staticWebAppName string = staticWebApp.name
+output cosmosAccountName string = cosmosAccount.name
+output cosmosEndpoint string = cosmosAccount.properties.documentEndpoint

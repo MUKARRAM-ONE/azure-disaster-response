@@ -1,11 +1,11 @@
-import { useAuth0 } from '@auth0/auth0-react'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useAuth } from '../auth/AuthContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:7071/api'
 
 export function AlertsDashboard() {
-  const { getAccessToken } = useAuth0()
+  const { token } = useAuth()
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -26,8 +26,7 @@ export function AlertsDashboard() {
     setLoading(true)
     setError('')
     try {
-      const token = await getAccessToken()
-      const response = await axios.get(`${API_URL}/Alerts?limit=${limit}&offset=${offset}`, {
+      const response = await axios.get(`${API_URL}/getalerts?limit=${limit}&offset=${offset}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
