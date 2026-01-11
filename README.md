@@ -13,6 +13,8 @@ This platform enables:
 
 **✅ Production Ready - Live on Azure Static Web Apps!**
 
+🌐 **Live Application**: https://blue-sand-0ebf47300.1.azurestaticapps.net/
+
 ### ⭐ Core Features
 - ✅ **Custom JWT Authentication** - Email/password login with bcrypt hashing
 - ✅ **Admin Dashboard** - Verify/block/delete users and alerts
